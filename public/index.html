@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Farmácia Santana · Controle de Estoque</title>
+<style>
+:root{--bg:#f4f7f5;--card:#fff;--tx:#18302a;--mut:#62776f;--bd:#dbe5e0;--pri:#0f7b5f;--priTx:#fff;--warn:#b45309;--warnBg:#fef3c7;--bad:#b91c1c;--badBg:#fee2e2;--ok:#166534;--okBg:#dcfce7;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0f1a17;--card:#17261f;--tx:#e6f1ec;--mut:#9bb2a8;--bd:#274037;--pri:#34c79b;--priTx:#07241b;--warn:#fbbf24;--warnBg:#3a2c08;--bad:#fca5a5;--badBg:#3b1515;--ok:#86efac;--okBg:#123322}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1a17;--card:#17261f;--tx:#e6f1ec;--mut:#9bb2a8;--bd:#274037;--pri:#34c79b;--priTx:#07241b;--warn:#fbbf24;--warnBg:#3a2c08;--bad:#fca5a5;--badBg:#3b1515;--ok:#86efac;--okBg:#123322}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--pri);color:var(--priTx);padding:16px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{margin:0;font-size:20px}header small{opacity:.85}
+main{max-width:1100px;margin:0 auto;padding:16px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px}
+.card b{display:block;font-size:24px}.card span{color:var(--mut);font-size:13px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+input,select,button{font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx)}
+input[type=search]{flex:1;min-width:180px}
+button{cursor:pointer}button.p{background:var(--pri);color:var(--priTx);border-color:var(--pri);font-weight:600}
+button.s{padding:4px 8px;font-size:13px}button.d{color:var(--bad)}
+.tw{overflow-x:auto;background:var(--card);border:1px solid var(--bd);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:760px}
+th,td{padding:10px;text-align:left;border-bottom:1px solid var(--bd);white-space:nowrap}
+th{font-size:12px;text-transform:uppercase;color:var(--mut)}
+tr:last-child td{border-bottom:0}
+.tag{padding:2px 8px;border-radius:99px;font-size:12px;font-weight:600}
+.ok{background:var(--okBg);color:var(--ok)}.warn{background:var(--warnBg);color:var(--warn)}.bad{background:var(--badBg);color:var(--bad)}
+dialog{border:1px solid var(--bd);border-radius:14px;background:var(--card);color:var(--tx);max-width:460px;width:92%}
+dialog::backdrop{background:#0008}
+label{display:block;font-size:13px;color:var(--mut);margin-top:10px}
+dialog input,dialog select{width:100%}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+h2{font-size:16px;margin:22px 0 8px}
+#msg{background:var(--warnBg);color:var(--warn);padding:8px 12px;border-radius:8px;margin-bottom:12px;display:none}
+.mov{font-size:13px;color:var(--mut);padding:6px 0;border-bottom:1px solid var(--bd)}
+.chart{display:flex;flex-direction:column;gap:8px}.br{display:grid;grid-template-columns:120px 1fr 100px;gap:8px;align-items:center;font-size:13px}.br i{display:block;height:14px;border-radius:7px;background:var(--pri)}.br b{text-align:right}
+</style>
+</head>
+<body>
+<div id="login" style="position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px">
+<form id="fL" class="card" style="width:100%;max-width:340px">
+  <div style="font-size:36px;text-align:center">💊</div>
+  <h2 style="text-align:center;margin:6px 0 2px">Farmácia Santana</h2>
+  <small id="sL" style="display:block;text-align:center;color:var(--mut)">Carregando…</small>
+  <label>Usuário<input id="lu" required autocomplete="username"></label>
+  <label>Senha<input id="lp" type="password" required autocomplete="current-password"></label>
+  <label id="lRw" style="display:none">E-mail<input id="lr" type="email" autocomplete="off" placeholder="nome@farmaciasantana.com.br"></label>
+  <div id="eL" style="color:var(--bad);font-size:13px;margin-top:8px"></div>
+  <button class="p" style="width:100%;margin-top:12px">Entrar</button>
+  <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:13px"><a href="#" id="aRec" style="color:var(--pri)">Esqueci a senha</a><a href="#" id="aCad" style="color:var(--pri)">Criar conta</a></div>
+</form></div>
+<header>
+  <div style="font-size:28px">💊</div>
+  <div><h1>Farmácia Santana</h1><small>Controle de estoque</small></div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span id="uInfo"></span><button class="s" id="bUsr" style="display:none">Usuários</button><button class="s" id="bOut">Sair</button></div>
+</header>
+<main>
+  <div id="msg"></div>
+  <div class="cards">
+    <div class="card"><b id="kTot">0</b><span>Produtos cadastrados</span></div>
+    <div class="card"><b id="kBaixo">0</b><span>Estoque baixo</span></div>
+    <div class="card"><b id="kVenc">0</b><span>Vencidos ou a vencer (30 dias)</span></div>
+    <div class="card"><b id="kVal">R$ 0,00</b><span>Valor em estoque (custo)</span></div>
+  </div>
+  <div class="bar">
+    <input type="search" id="q" placeholder="Buscar por nome, categoria ou lote…">
+    <select id="f"><option value="">Todos</option><option value="baixo">Estoque baixo</option><option value="venc">Vencendo/vencidos</option></select>
+    <button class="p" id="novo">+ Novo produto</button>
+    <button id="exp">⬇ Exportar CSV</button>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Produto</th><th>Categoria</th><th>Lote</th><th>Validade</th><th>Qtd</th><th>Mín.</th><th>Preço</th><th>Situação</th><th>Ações</th></tr></thead>
+    <tbody id="tb"></tbody>
+  </table></div>
+  <h2>Valor em estoque por categoria</h2>
+  <div class="card chart" id="chart"></div>
+  <h2>Últimas movimentações</h2>
+  <div class="card" id="movs"></div>
+</main>
+
+<dialog id="dlgP"><form method="dialog" id="fP">
+  <h3 id="tP">Novo produto</h3>
+  <label>Nome<input id="nome" required></label>
+  <div class="row"><label>Categoria<select id="cat"><option>Medicamento</option><option>Genérico</option><option>Controlado</option><option>Higiene</option><option>Dermocosmético</option><option>Outros</option></select></label>
+  <label>Lote<input id="lote"></label></div>
+  <div class="row"><label>Validade<input type="date" id="val" required></label>
+  <label>Quantidade<input type="number" id="qtd" min="0" value="0" required></label></div>
+  <div class="row"><label>Estoque mínimo<input type="number" id="min" min="0" value="5" required></label>
+  <label>Custo (R$)<input type="number" id="custo" min="0" step="0.01" value="0" required></label></div>
+  <label>Preço de venda (R$)<input type="number" id="preco" min="0" step="0.01" value="0" required></label>
+  <label>Fornecedor<input id="forn" placeholder="Ex.: Distribuidora Saúde"></label>
+  <div class="bar" style="margin-top:14px;justify-content:flex-end"><button type="button" id="cP">Cancelar</button><button class="p" type="submit">Salvar</button></div>
+</form></dialog>
+
+<dialog id="dlgU">
+  <h3>Usuários do sistema</h3><div id="uList"></div>
+  <form id="fU"><label>Nome de usuário<input id="un" required></label>
+  <label>E-mail (para recuperar a senha)<input id="ur" type="email" required></label>
+  <div class="row"><label>Senha<input id="up" type="password" minlength="6" required></label>
+  <label>Perfil<select id="upf"><option value="balconista">Balconista</option><option value="farmaceutico">Farmacêutico</option><option value="gerente">Gerente</option></select></label></div>
+  <div class="bar" style="margin-top:14px;justify-content:flex-end"><button type="button" id="cU">Fechar</button><button class="p">Adicionar</button></div></form>
+</dialog>
+
+<dialog id="dlgM"><form method="dialog" id="fM">
+  <h3 id="tM">Movimentar</h3>
+  <label>Tipo<select id="tipo"><option value="entrada">Entrada (compra/reposição)</option><option value="saida">Saída (venda/baixa)</option></select></label>
+  <label>Quantidade<input type="number" id="mq" min="1" value="1" required></label>
+  <label id="lRec" style="display:none">Nº da receita (obrigatório para controlados)<input id="rec"></label>
+  <div class="bar" style="margin-top:14px;justify-content:flex-end"><button type="button" id="cM">Cancelar</button><button class="p" type="submit">Confirmar</button></div>
+</form></dialog>
+
+<script>
+const $=id=>document.getElementById(id);
+const brl=n=>Number(n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const PERF={gerente:"Gerente",farmaceutico:"Farmacêutico",balconista:"Balconista"};
+let produtos=[],movs=[],USERS=[],me=null,token=null,editId=null,movId=null,modo="login",emRec="";
+
+/* ---- Comunicação com o servidor ---- */
+async function api(path,method="GET",body){
+  const r=await fetch("/api"+path,{method,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{})},body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){if(r.status===401&&token)sair();throw new Error(j.erro||"Erro de comunicação com o servidor.")}
+  return j;
+}
+async function carregar(){[produtos,movs]=await Promise.all([api("/produtos"),api("/movimentos")]);render()}
+
+/* ---- Regras de situação ---- */
+const hoje=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const dias=v=>Math.floor((new Date(v+"T00:00:00")-hoje())/864e5);
+function situacao(p){
+  const d=dias(p.validade);
+  if(d<0)return{t:"Vencido",c:"bad",v:1};
+  if(d<=30)return{t:"Vence em "+d+"d",c:"warn",v:1};
+  if(Number(p.qtd)<=0)return{t:"Sem estoque",c:"bad",b:1};
+  if(Number(p.qtd)<=Number(p.minimo))return{t:"Estoque baixo",c:"warn",b:1};
+  return{t:"OK",c:"ok"};
+}
+
+function render(){
+  if(!me)return;
+  const q=$("q").value.toLowerCase(),f=$("f").value;
+  let low=0,exp=0,val=0;
+  produtos.forEach(p=>{const s=situacao(p);if(s.b||Number(p.qtd)<=Number(p.minimo))low++;if(s.v)exp++;val+=Number(p.qtd)*Number(p.custo)});
+  $("kTot").textContent=produtos.length;$("kBaixo").textContent=low;$("kVenc").textContent=exp;$("kVal").textContent=brl(val);
+  const list=produtos.filter(p=>{
+    const s=situacao(p);
+    if(q&&!(p.nome+" "+p.categoria+" "+p.lote).toLowerCase().includes(q))return false;
+    if(f==="baixo"&&!(Number(p.qtd)<=Number(p.minimo)))return false;
+    if(f==="venc"&&!s.v)return false;
+    return true;
+  });
+  $("tb").innerHTML=list.length?list.map(p=>{const s=situacao(p);return `<tr>
+    <td><b>${esc(p.nome)}</b></td><td>${esc(p.categoria)}</td><td>${esc(p.lote)}</td>
+    <td>${new Date(p.validade+"T00:00:00").toLocaleDateString("pt-BR")}</td>
+    <td><b>${p.qtd}</b></td><td>${p.minimo}</td><td>${brl(p.preco)}</td>
+    <td><span class="tag ${s.c}">${s.t}</span></td>
+    <td><button class="s" data-a="mov" data-id="${p.id}">± Estoque</button>
+    ${me.perfil!=="balconista"?`<button class="s" data-a="ed" data-id="${p.id}">Editar</button>`:""}
+    ${me.perfil==="gerente"?`<button class="s d" data-a="del" data-id="${p.id}">Excluir</button>`:""}</td></tr>`}).join("")
+    :`<tr><td colspan="9" style="text-align:center;color:var(--mut);padding:24px">Nenhum produto encontrado.${me.perfil!=="balconista"?" Clique em “Novo produto” para começar.":""}</td></tr>`;
+  const cats={};produtos.forEach(p=>{cats[p.categoria]=(cats[p.categoria]||0)+p.qtd*p.custo});
+  const ent=Object.entries(cats).sort((a,b)=>b[1]-a[1]),mx=Math.max(1,...ent.map(e=>e[1]));
+  $("chart").innerHTML=ent.length?ent.map(([c,v])=>`<div class="br"><span>${esc(c)}</span><i style="width:${Math.max(2,v/mx*100)}%"></i><b>${brl(v)}</b></div>`).join(""):`<span style="color:var(--mut)">Sem dados ainda.</span>`;
+  const ms=movs.slice(0,10);
+  $("movs").innerHTML=ms.length?ms.map(m=>`<div class="mov">${new Date(m.data).toLocaleString("pt-BR")} · <b>${m.tipo==="entrada"?"Entrada":"Saída"}</b> de ${m.qtd} × ${esc(m.nome)}${m.receita?" · receita "+esc(m.receita):""}${m.usuario?" · por "+esc(m.usuario):""}</div>`).join(""):`<span style="color:var(--mut)">Nenhuma movimentação ainda.</span>`;
+}
+$("q").oninput=render;$("f").onchange=render;
+
+/* ---- Produtos ---- */
+$("novo").onclick=()=>{editId=null;$("tP").textContent="Novo produto";$("fP").reset();$("dlgP").showModal()};
+$("cP").onclick=()=>$("dlgP").close();$("cM").onclick=()=>$("dlgM").close();
+$("tb").onclick=async e=>{
+  const b=e.target.closest("button");if(!b)return;
+  const p=produtos.find(x=>String(x.id)===b.dataset.id);if(!p)return;
+  if(b.dataset.a==="ed"){editId=p.id;$("tP").textContent="Editar produto";
+    $("nome").value=p.nome;$("cat").value=p.categoria;$("lote").value=p.lote||"";$("val").value=p.validade;
+    $("qtd").value=p.qtd;$("min").value=p.minimo;$("custo").value=p.custo;$("preco").value=p.preco;$("forn").value=p.fornecedor||"";$("dlgP").showModal()}
+  if(b.dataset.a==="mov"){movId=p.id;$("tM").textContent="Movimentar: "+p.nome;$("mq").value=1;$("rec").value="";
+    $("lRec").style.display=p.categoria==="Controlado"?"block":"none";$("dlgM").showModal()}
+  if(b.dataset.a==="del"&&confirm("Excluir “"+p.nome+"”?")){try{await api("/produtos/"+p.id,"DELETE");await carregar()}catch(err){alert(err.message)}}
+};
+$("fP").onsubmit=async e=>{
+  e.preventDefault();
+  const d={nome:$("nome").value.trim(),categoria:$("cat").value,lote:$("lote").value.trim(),validade:$("val").value,
+    qtd:+$("qtd").value,minimo:+$("min").value,custo:+$("custo").value,preco:+$("preco").value,fornecedor:$("forn").value.trim()};
+  try{await api(editId?"/produtos/"+editId:"/produtos",editId?"PUT":"POST",d);$("dlgP").close();await carregar()}catch(err){alert(err.message)}
+};
+$("fM").onsubmit=async e=>{
+  e.preventDefault();
+  try{await api("/movimentos","POST",{produtoId:movId,tipo:$("tipo").value,qtd:+$("mq").value,receita:$("rec").value.trim()});$("dlgM").close();await carregar()}
+  catch(err){alert(err.message)}
+};
+$("exp").onclick=()=>{
+  const h=["Produto","Categoria","Lote","Validade","Qtd","Minimo","Custo","Preco","Fornecedor"];
+  const rows=produtos.map(p=>[p.nome,p.categoria,p.lote,p.validade,p.qtd,p.minimo,p.custo,p.preco,p.fornecedor||""]);
+  const csv="\ufeff"+[h,...rows].map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(";")).join("\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download="estoque-farmacia-santana.csv";a.click();
+};
+
+/* ---- Login, cadastro e recuperação de senha por e-mail ---- */
+function vis(){
+  const T={login:["Entre com seu usuário e senha","Entrar"],setup:["Primeiro acesso: crie o usuário gerente","Criar gerente"],cad:["Criar nova conta (perfil balconista)","Cadastrar"],rec:["Recuperar senha: informe seu e-mail cadastrado","Enviar código"],rec2:["Digite o código enviado ao seu e-mail","Redefinir senha"]}[modo];
+  $("sL").textContent=T[0];$("fL").querySelector("button").textContent=T[1];
+  const emM=["setup","cad","rec"].includes(modo),rc=modo==="rec"||modo==="rec2";
+  $("lRw").style.display=modo==="login"?"none":"block";$("lr").required=modo!=="login";$("lr").type=emM?"email":"text";
+  $("lRw").firstChild.textContent=emM?"E-mail":"Código recebido por e-mail";
+  $("lu").parentNode.style.display=rc?"none":"";$("lu").required=!rc;
+  $("lp").parentNode.style.display=modo==="rec"?"none":"";$("lp").required=modo!=="rec";
+  $("lp").parentNode.firstChild.textContent=modo==="rec2"?"Nova senha":"Senha";
+  $("lp").autocomplete=modo==="login"?"current-password":"new-password";
+  $("aRec").style.display=modo==="login"?"":"none";
+  $("aCad").textContent=modo==="login"?"Criar conta":"Voltar ao login";
+  $("aCad").style.display=modo==="setup"?"none":"";
+}
+function aviso(t,ok){$("eL").style.color=ok?"var(--pri)":"var(--bad)";$("eL").textContent=t}
+$("aRec").onclick=e=>{e.preventDefault();modo="rec";aviso("");vis()};
+$("aCad").onclick=e=>{e.preventDefault();modo=modo==="login"?"cad":"login";aviso("");vis()};
+$("fL").onsubmit=async e=>{
+  e.preventDefault();aviso("");
+  const n=$("lu").value.trim().toLowerCase(),s=$("lp").value,em=$("lr").value.trim().toLowerCase();
+  try{
+    if(modo==="login"){entrar(await api("/login","POST",{nome:n,senha:s}))}
+    else if(modo==="setup"||modo==="cad"){await api("/cadastro","POST",{nome:n,senha:s,email:em});
+      $("lp").value="";$("lr").value="";modo="login";vis();aviso("Conta criada. Agora faça o login.",1)}
+    else if(modo==="rec"){await api("/recuperar","POST",{email:em});emRec=em;modo="rec2";$("lr").value="";vis();
+      aviso("Se o e-mail estiver cadastrado, enviamos um código. Confira sua caixa de entrada.",1)}
+    else{await api("/redefinir","POST",{email:emRec,codigo:$("lr").value.trim(),senha:s});
+      $("lp").value="";$("lr").value="";modo="login";vis();aviso("Senha redefinida. Faça o login.",1)}
+  }catch(err){aviso(err.message)}
+};
+function aplicarUsuario(){
+  $("login").style.display="none";
+  $("uInfo").textContent=me.nome+" · "+PERF[me.perfil];
+  $("bUsr").style.display=me.perfil==="gerente"?"":"none";
+  $("novo").style.display=me.perfil==="balconista"?"none":"";
+}
+async function entrar(j){
+  token=j.token;me=j.user;try{sessionStorage.setItem("fs_tk",token)}catch(e){}
+  $("lp").value="";aplicarUsuario();await carregar();
+}
+function sair(){
+  token=null;me=null;try{sessionStorage.removeItem("fs_tk")}catch(e){}
+  $("login").style.display="flex";modo="login";vis();produtos=[];movs=[];
+}
+$("bOut").onclick=sair;
+
+/* ---- Usuários (gerente) ---- */
+async function listU(){
+  try{USERS=await api("/usuarios")}catch(e){return}
+  $("uList").innerHTML=USERS.map(u=>`<div class="mov"><b>${esc(u.nome)}</b> · ${PERF[u.perfil]} · ${esc(u.email)}${u.id!==me.id?` <button class="s d" data-id="${u.id}">Remover</button>`:" (você)"}</div>`).join("");
+}
+$("bUsr").onclick=async()=>{await listU();$("dlgU").showModal()};
+$("cU").onclick=()=>$("dlgU").close();
+$("uList").onclick=async e=>{const b=e.target.closest("button");
+  if(b&&confirm("Remover este usuário?")){try{await api("/usuarios/"+b.dataset.id,"DELETE");await listU()}catch(err){alert(err.message)}}};
+$("fU").onsubmit=async e=>{
+  e.preventDefault();
+  try{await api("/usuarios","POST",{nome:$("un").value,email:$("ur").value,senha:$("up").value,perfil:$("upf").value});$("fU").reset();await listU()}
+  catch(err){alert(err.message)}
+};
+
+/* ---- Início ---- */
+(async()=>{
+  try{token=sessionStorage.getItem("fs_tk")}catch(e){}
+  if(token){try{me=(await api("/eu")).user;aplicarUsuario();await carregar();return}catch(e){token=null;me=null}}
+  try{modo=(await api("/status")).semUsuarios?"setup":"login"}catch(e){aviso("Servidor indisponível. Verifique se ele está rodando.")}
+  vis();
+})();
+</script>
+</body>
+</html>
